@@ -3,6 +3,7 @@ import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import imagesCards from '../templates/imagesCards.hbs';
 import FetchImagesApi from './fetchImagesApi';
+import InfiniteScroll from 'infinite-scroll';
 
 const searchForm = document.querySelector('#search-form');
 const galleryContainer = document.querySelector('.gallery');
@@ -28,7 +29,9 @@ function formSubmitHandler(event) {
       if (totalPages === 0 || queryFromForm === '') {
         galleryContainer.innerHTML = '';
         loadMoreBtn.classList.add('is-hidden');
-        loadMoreBtn.removeEventListener('click', loadMoreBtnClickHandler);
+        loadMoreBtn.removeEventListener('click', () =>
+          loadMoreBtnClickHandler()
+        );
         setTimeout(() => {
           Notify.failure(
             'Sorry, there are no images matching your search query. Please try again.'
@@ -74,31 +77,34 @@ function formSubmitHandler(event) {
 }
 
 function loadMoreBtnClickHandler() {
-  searchMachine.fetchImages().then(({ data: { hits, total } }) => {
-    const totalPages = Math.ceil(total / searchMachine.perPage);
-    galleryContainer.insertAdjacentHTML('beforeend', imagesCards(hits));
-    gallery.refresh();
+  searchMachine
+    .fetchImages()
+    .then(({ data: { hits, total } }) => {
+      const totalPages = Math.ceil(total / searchMachine.perPage);
+      galleryContainer.insertAdjacentHTML('beforeend', imagesCards(hits));
+      gallery.refresh();
 
-    const { height: totalGalleryHeight } =
-      galleryContainer.getBoundingClientRect();
+      const { height: totalGalleryHeight } =
+        galleryContainer.getBoundingClientRect();
 
-    window.scrollTo({
-      top: totalGalleryHeight,
-      behavior: 'smooth',
-    });
+      window.scrollTo({
+        top: totalGalleryHeight,
+        behavior: 'smooth',
+      });
 
-    if (totalPages === searchMachine.page) {
-      setTimeout(
-        () =>
-          Notify.info(
-            "We're sorry, but you've reached the end of search results."
-          ),
-        1000
-      );
-      loadMoreBtn.classList.add('is-hidden');
-      loadMoreBtn.removeEventListener('click', loadMoreBtnClickHandler);
-      return;
-    }
-    searchMachine.page += 1;
-  });
+      if (totalPages === searchMachine.page) {
+        setTimeout(
+          () =>
+            Notify.info(
+              "We're sorry, but you've reached the end of search results."
+            ),
+          1000
+        );
+        loadMoreBtn.classList.add('is-hidden');
+        loadMoreBtn.removeEventListener('click', loadMoreBtnClickHandler);
+        return;
+      }
+      searchMachine.page += 1;
+    })
+    .catch(error => Notify.failure(error.message));
 }
