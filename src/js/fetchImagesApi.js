@@ -7,8 +7,8 @@ export default class FetchImagesApi {
   query = null;
   perPage = 40;
 
-  async fetchImages() {
-    const response = await axios.get(`${this.#BASE_URL}`, {
+  fetchImages() {
+    const response = axios.get(`${this.#BASE_URL}`, {
       params: {
         key: this.#PERSONAL_KEY,
         q: this.query,
